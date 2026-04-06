@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Intelligent Online Shopping Analyzer</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+<!-- TOP HEADER -->
+<header>
+  <div class="header-left">
+    <div class="header-logo">
+      <span class="icon">🛒</span>
+      <span>Intelligent Online Shopping Analyzer</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="header-notif">
+      🔔
+      <span class="notif-badge">3</span>
+    </div>
+    <div class="header-avatar">👤</div>
+  </div>
+</header>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside>
+    <div class="nav-section-label">Navigation</div>
+
+    <div class="nav-item active" onclick="navTo('dashboard',this)">
+      <div class="nav-icon">🏠</div>
+      Dashboard
+    </div>
+    <div class="nav-item" onclick="navTo('upload',this)">
+      <div class="nav-icon">📤</div>
+      Data Upload
+    </div>
+    <div class="nav-item" onclick="navTo('overview',this)">
+      <div class="nav-icon">📊</div>
+      Sales Overview
+    </div>
+    <div class="nav-item" onclick="navTo('basket',this)">
+      <div class="nav-icon">🔗</div>
+      Recommendations
+    </div>
+    <div class="nav-item" onclick="navTo('segments',this)">
+      <div class="nav-icon">👥</div>
+      Customer Segments
+    </div>
+    <div class="nav-item" onclick="navTo('filters',this)">
+      <div class="nav-icon">🔍</div>
+      Advanced Filters
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="data-status">
+        <span class="status-dot" id="status-dot"></span>
+        <span id="status-text">No Data</span>
+      </div>
+      <button class="reset-btn" onclick="resetAll()">↺ Reset All</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main>
+
+    <!-- ══════════════════════ DASHBOARD ══════════════════════ -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div class="page-header-icon">🛒</div>
+        <h1>Intelligent Online Shopping Analyzer</h1>
+        <p>Advanced data mining and customer intelligence for e-commerce insights</p>
+      </div>
+
+      <div class="feature-cards">
+        <div class="feat-card" onclick="navTo('upload',null)">
+          <div class="feat-icon">📤</div>
+          <h3>Data Upload</h3>
+          <p>Upload your transaction data in CSV format and let our system automatically clean and prepare it for analysis.</p>
+          <button class="feat-btn feat-btn-primary" onclick="event.stopPropagation();navTo('upload',null)">
+            📤 Get Started
+          </button>
+        </div>
+
+        <div class="feat-card" id="card-overview" onclick="gotoIfData('overview')">
+          <div class="feat-icon">📈</div>
+          <h3>Sales Overview</h3>
+          <p>Explore global sales trends, top products, revenue patterns, and geographic distribution with interactive charts.</p>
+          <button class="feat-btn feat-btn-disabled" id="btn-overview" onclick="event.stopPropagation();gotoIfData('overview')">
+            ▶ Upload Data First
+          </button>
+        </div>
+
+        <div class="feat-card" id="card-rec" onclick="gotoIfData('basket')">
+          <div class="feat-icon">💡</div>
+          <h3>Product Recommendations</h3>
+          <p>Discover "frequently bought together" patterns using advanced FP-Growth algorithm and association rule mining.</p>
+          <button class="feat-btn feat-btn-disabled" id="btn-rec" onclick="event.stopPropagation();gotoIfData('basket')">
+            ▶ Upload Data First
+          </button>
+        </div>
+
+        <div class="feat-card" id="card-seg" onclick="gotoIfData('segments')">
+          <div class="feat-icon">🎯</div>
+          <h3>Customer Segments</h3>
+          <p>Segment customers using RFM analysis and K-Means clustering into Champions, At-Risk, Loyal, and more.</p>
+          <button class="feat-btn feat-btn-disabled" id="btn-seg" onclick="event.stopPropagation();gotoIfData('segments')">
+            ▶ Upload Data First
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick stats (hidden until data) -->
+      <div id="dash-stats" style="display:none">
+        <div class="sec-title">Quick Stats</div>
+        <div class="stats-row" id="dash-stats-row"></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════ DATA UPLOAD ══════════════════════ -->
+    <div class="page" id="page-upload">
+      <div class="page-header">
+        <div class="page-header-icon">📤</div>
+        <h1>Data Upload</h1>
+        <p>Upload your Online Retail CSV (UCI/Kaggle format) — handles lakh-scale datasets efficiently</p>
+      </div>
+
+      <div class="upload-zone" id="upload-zone"
+           onclick="document.getElementById('csv-input').click()"
+           ondragover="handleDragOver(event)" ondrop="handleDrop(event)">
+        <div style="font-size:3rem;margin-bottom:12px">📦</div>
+        <h3>Drop your CSV file here</h3>
+        <p>Supports files with 100,000+ rows (lakh-scale)<br>
+           Columns: InvoiceNo · StockCode · Description · Quantity · InvoiceDate · UnitPrice · CustomerID · Country</p>
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+          <button class="feat-btn feat-btn-primary" onclick="event.stopPropagation();document.getElementById('csv-input').click()">
+            📁 Choose File
+          </button>
+          <button class="feat-btn" style="background:var(--purple-pale);color:var(--purple-mid);"
+                  onclick="event.stopPropagation();toast('Please upload a real Online Retail CSV file')">
+            🎲 Sample Data N/A
+          </button>
+        </div>
+        <input type="file" id="csv-input" accept=".csv" style="display:none" onchange="handleUpload(this.files[0])"/>
+      </div>
+
+      <div id="progress-wrap">
+        <div class="prog-label" id="prog-label">Parsing CSV…</div>
+        <div class="prog-bar"><div class="prog-fill" id="prog-fill"></div></div>
+      </div>
+
+      <!-- Schema guide -->
+      <div class="sec-title" style="margin-top:28px">Expected CSV Schema</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td><b>InvoiceNo</b></td><td><span class="pill pill-purple">string</span></td><td>Cancellations start with 'C' — auto-removed</td></tr>
+            <tr><td><b>StockCode</b></td><td><span class="pill pill-purple">string</span></td><td>SKU identifier</td></tr>
+            <tr><td><b>Description</b></td><td><span class="pill pill-purple">string</span></td><td>Product name — nulls dropped</td></tr>
+            <tr><td><b>Quantity</b></td><td><span class="pill pill-green">int</span></td><td>Must be &gt; 0</td></tr>
+            <tr><td><b>InvoiceDate</b></td><td><span class="pill pill-amber">datetime</span></td><td>Used for RFM recency</td></tr>
+            <tr><td><b>UnitPrice</b></td><td><span class="pill pill-green">float</span></td><td>Must be &gt; 0</td></tr>
+            <tr><td><b>CustomerID</b></td><td><span class="pill pill-green">int</span></td><td>Nulls dropped</td></tr>
+            <tr><td><b>Country</b></td><td><span class="pill pill-purple">string</span></td><td>Used for geo charts</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══════════════════════ SALES OVERVIEW ══════════════════ -->
+    <div class="page" id="page-overview">
+      <div class="page-header">
+        <div class="page-header-icon">📊</div>
+        <h1>Sales Overview</h1>
+        <p>Revenue trends, top products, and geographic insights</p>
+      </div>
+
+      <div class="stats-row" id="stats-row"></div>
+
+      <div class="chart-card" style="margin-bottom:20px">
+        <div class="chart-card-title">Monthly Revenue</div>
+        <canvas id="chart-monthly" height="75"></canvas>
+      </div>
+
+      <div class="chart-grid">
+        <div class="chart-card">
+          <div class="chart-card-title">Top 10 Products by Revenue</div>
+          <canvas id="chart-products"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-title">Revenue by Country</div>
+          <canvas id="chart-countries"></canvas>
+        </div>
+      </div>
+
+      <div class="sec-title">Sample Transactions</div>
+      <div class="tbl-wrap">
+        <table id="sample-table">
+          <thead><tr><th>Invoice</th><th>Product</th><th>Qty</th><th>Price</th><th>Revenue</th><th>Customer</th><th>Country</th><th>Date</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══════════════════════ RECOMMENDATIONS ═════════════════ -->
+    <div class="page" id="page-basket">
+      <div class="page-header">
+        <div class="page-header-icon">🔗</div>
+        <h1>Association Rules</h1>
+        <p>FP-Growth Intelligent Online Shopping Analyzer — discover "frequently bought together" patterns</p>
+      </div>
+
+      <div class="ctrl-row">
+        <div class="ctrl-group">
+          <label>Min Support</label>
+          <input type="range" min="0.005" max="0.15" step="0.005" value="0.05" id="sl-support">
+          <span class="val" id="lbl-sup">2.0%</span>
+        </div>
+        <div class="ctrl-group">
+          <label>Min Confidence</label>
+          <input type="range" min="0.1" max="0.9" step="0.05" value="0.3" id="sl-conf" oninput="updSlider('sl-conf','lbl-conf','%',100)">
+          <span class="val" id="lbl-conf">30.0%</span>
+        </div>
+        <div class="ctrl-group">
+          <label>Min Lift</label>
+          <input type="range" min="1.0" max="5.0" step="0.1" value="1.0" id="sl-lift" oninput="updSlider('sl-lift','lbl-lift','×',1)">
+          <span class="val" id="lbl-lift">1.0×</span>
+        </div>
+        <button class="run-btn" onclick="runBasket()">⚡ Compute Rules</button>
+      </div>
+
+      <div class="stats-row" id="basket-kpis"></div>
+
+      <div class="sec-title">Product Recommender</div>
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:18px;flex-wrap:wrap">
+        <select id="rec-product" style="background:var(--purple-faint);border:1px solid #d4c8f8;border-radius:9px;padding:9px 14px;color:var(--text);font-family:var(--font);font-size:.85rem;outline:none;min-width:280px">
+          <option>— Load data first —</option>
+        </select>
+        <input type="number" id="rec-k" value="5" min="1" max="20"
+               style="width:70px;background:var(--purple-faint);border:1px solid #d4c8f8;border-radius:9px;padding:9px 12px;color:var(--text);font-family:var(--font);font-size:.85rem;outline:none"/>
+        <button class="run-btn" onclick="getRecommendations()">🔍 Find Recommendations</button>
+      </div>
+      <ul class="rec-list" id="rec-list"></ul>
+
+      <div class="sec-title" style="margin-top:28px">All Association Rules</div>
+      <div class="chart-card" style="margin-bottom:20px">
+        <div class="chart-card-title">Support vs Confidence (bubble size = lift)</div>
+        <canvas id="chart-bubble" height="85"></canvas>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>#</th><th>If Customer Buys</th><th>They Also Buy</th><th>Support</th><th>Confidence</th><th>Lift</th></tr></thead>
+          <tbody id="rules-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══════════════════════ CUSTOMER SEGMENTS ═══════════════ -->
+    <div class="page" id="page-segments">
+      <div class="page-header">
+        <div class="page-header-icon">👥</div>
+        <h1>Customer Segments</h1>
+        <p>RFM analysis with K-Means clustering to identify Champions, At-Risk customers and more</p>
+      </div>
+
+      <div class="ctrl-row">
+        <div class="ctrl-group">
+          <label>Number of Clusters</label>
+          <input type="number" id="n-clusters" value="5" min="3" max="6" style="width:70px"/>
+        </div>
+        <button class="run-btn" onclick="runRFM()">⚡ Segment Customers</button>
+      </div>
+
+      <div class="seg-grid" id="seg-cards"></div>
+
+      <div class="chart-grid">
+        <div class="chart-card">
+          <div class="chart-card-title">Customer Distribution</div>
+          <canvas id="chart-seg-donut"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-title">Avg Monetary Value by Segment</div>
+          <canvas id="chart-seg-bar"></canvas>
+        </div>
+      </div>
+
+      <div class="sec-title">Segment Summary</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Segment</th><th>Customers</th><th>Avg Recency</th><th>Avg Frequency</th><th>Avg Monetary</th><th>Total Revenue</th></tr></thead>
+          <tbody id="seg-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══════════════════════ ADVANCED FILTERS ═══════════════ -->
+    <div class="page" id="page-filters">
+      <div class="page-header">
+        <div class="page-header-icon">🔍</div>
+        <h1>Advanced Filters</h1>
+        <p>Search and analyze specific customers, products, and date ranges</p>
+      </div>
+
+      <!-- Filter Tabs -->
+      <div class="filter-tabs-bar">
+        <button class="filter-tab active" onclick="switchFilterTab('customer')">👤 Customer</button>
+        <button class="filter-tab" onclick="switchFilterTab('product')">🛍️ Product</button>
+        <button class="filter-tab" onclick="switchFilterTab('date')">📅 Date</button>
+      </div>
+
+      <!-- Customer Filters -->
+      <div class="filter-panel active" id="filter-customer">
+        <div class="filter-row">
+          <div class="filter-col">
+            <label>Customer ID</label>
+            <input type="text" id="f-customer-id" placeholder="Search customer ID...">
+          </div>
+          <div class="filter-col">
+            <label>Country</label>
+            <select id="f-country">
+              <option value="">All Countries</option>
+            </select>
+          </div>
+        </div>
+        <div class="filter-row">
+          <label>Segments (select one or more)</label>
+          <div id="f-segments" class="checkbox-group"></div>
+        </div>
+      </div>
+
+      <!-- Product Filters -->
+      <div class="filter-panel" id="filter-product">
+        <div class="filter-row">
+          <div class="filter-col">
+            <label>Product Name</label>
+            <input type="text" id="f-product-name" placeholder="Search product...">
+          </div>
+          <div class="filter-col">
+            <label>Stock Code</label>
+            <input type="text" id="f-stock-code" placeholder="e.g., 85123A">
+          </div>
+        </div>
+        <div class="filter-row">
+          <div class="filter-col">
+            <label>Min Price (£)</label>
+            <input type="number" id="f-price-min" placeholder="0">
+          </div>
+          <div class="filter-col">
+            <label>Max Price (£)</label>
+            <input type="number" id="f-price-max" placeholder="1000">
+          </div>
+        </div>
+        <div class="filter-row">
+          <div class="filter-col">
+            <label>Sort By Column</label>
+            <select id="f-sort">
+              <option value="quantity">Quantity</option>
+              <option value="revenue">Revenue</option>
+              <option value="frequency">Orders</option>
+              <option value="name">Product Name</option>
+              <option value="stock">Stock Code</option>
+              <option value="price">Avg Price</option>
+              <option value="customers">Customers</option>
+            </select>
+          </div>
+          <div class="filter-col">
+            <label>Order</label>
+            <select id="f-order">
+              <option value="desc">Descending (High to Low, Z to A)</option>
+              <option value="asc">Ascending (Low to High, A to Z)</option>
+            </select>
+          </div>
+          <div class="filter-col">
+            <label>Show Top</label>
+            <select id="f-limit" onchange="handleCustomLimit(this)">
+              <option value="5">Top 5</option>
+              <option value="10">Top 10</option>
+              <option value="20">Top 20</option>
+              <option value="50">Top 50</option>
+              <option value="100">Top 100</option>
+              <option value="200">Top 200</option>
+              <option value="500">Top 500</option>
+              <option value="custom">Custom...</option>
+            </select>
+            <input type="number" id="f-custom-limit" placeholder="Enter number" style="display: none; margin-top: 5px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; width: 100%;">
+          </div>
+        </div>
+      </div>
+
+      <!-- Date Filters -->
+      <div class="filter-panel" id="filter-date">
+        <div class="filter-row">
+          <div class="filter-col">
+            <label>Quick Filter</label>
+            <select id="f-quick-date" onchange="toggleCustomDates()">
+              <option value="">Custom Range</option>
+              <option value="last_7_days">Last 7 Days</option>
+              <option value="last_30_days">Last 30 Days</option>
+              <option value="last_3_months">Last 3 Months</option>
+              <option value="last_year">Last Year</option>
+            </select>
+          </div>
+        </div>
+        <div id="custom-dates">
+          <div class="filter-row">
+            <div class="filter-col">
+              <label>From Date</label>
+              <input type="date" id="f-date-from">
+            </div>
+            <div class="filter-col">
+              <label>To Date</label>
+              <input type="date" id="f-date-to">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Apply Buttons -->
+      <div class="filter-actions">
+        <button class="run-btn" onclick="applyFilters()">⚡ Apply Filters</button>
+        <button class="feat-btn" onclick="resetFilters()">↺ Reset Filters</button>
+      </div>
+
+      <!-- Results -->
+      <div id="filter-results-section" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div class="sec-title" style="margin:0">Filter Results</div>
+          <button class="feat-btn" id="btn-download-customers" style="display:none"
+                  onclick="downloadCustomersCSV()">
+            ⬇ Download Customers (CSV)
+          </button>
+        </div>
+        <div class="stats-row" id="filter-stats"></div>
+        <div class="tbl-wrap">
+          <table>
+            <thead id="filter-thead"></thead>
+            <tbody id="filter-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script src="js/api.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
